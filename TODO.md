@@ -1,0 +1,3 @@
+- [x] Fix skill bar animation in About.jsx by making progressVariants a function that animates to the correct percentage
+- [x] Update the motion.div in About.jsx to pass percentage to variants
+- [x] Adjust responsive design in App.css: reduce min-width on mobile and switch to single column on very small screens
