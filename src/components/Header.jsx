@@ -153,7 +153,7 @@ function Header() {
             variants={itemVariants}
             whileHover={{ scale: 1.05 }}
           >
-            HAI! SAYA
+            HAI! 
           </motion.div>
           <motion.h1 
             variants={itemVariants}
