@@ -16,14 +16,12 @@ function App() {
   useEffect(() => {
     if (!scrollRef.current) return
 
-    const scroll = new LocomotiveScroll({
-      el: scrollRef.current,
-      smooth: true,
-      lerp: 0.1,
-      multiplier: 0.7,
-    })
+    // Cek jika device mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    // Handle anchor links dengan Locomotive Scroll
+    let scroll = null;
+
+    // Declare handleAnchorClick outside if block so it is accessible in cleanup
     const handleAnchorClick = (e) => {
       const anchor = e.target.closest('a')
       if (!anchor) return
@@ -33,22 +31,33 @@ function App() {
         e.preventDefault()
         const target = document.querySelector(href)
         if (target) {
-          scroll.scrollTo(target)
+          scroll?.scrollTo(target)
         }
       }
     }
 
-    // Add event listeners untuk semua anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', handleAnchorClick)
-    })
+    if (!isMobile) {
+      scroll = new LocomotiveScroll({
+        el: scrollRef.current,
+        smooth: true,
+        lerp: 0.1,
+        multiplier: 0.7,
+      })
+
+      // Add event listeners untuk semua anchor links
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', handleAnchorClick)
+      })
+    }
 
     return () => {
-      // Cleanup
-      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.removeEventListener('click', handleAnchorClick)
-      })
-      scroll.destroy()
+      if (!isMobile && scroll) {
+        // Cleanup
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+          anchor.removeEventListener('click', handleAnchorClick)
+        })
+        scroll.destroy()
+      }
     }
   }, [])
 

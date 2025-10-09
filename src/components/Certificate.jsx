@@ -103,7 +103,7 @@ function Certificate() {
   }, [selectedCertificate])
 
   return (
-    <section id="certificates" className="certificates" ref={ref}>
+    <section id="certificate" className="certificates" ref={ref}>
       <div className="container">
         <motion.div 
           className="section-header"

@@ -15,27 +15,32 @@ function Navbar() {
   // === Ambil instance locomotive scroll sekali aja ===
   const locoScroll = useRef(null)
   useEffect(() => {
-    if (!locoScroll.current) {
+    // Cek jika device mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (!isMobile && !locoScroll.current) {
       locoScroll.current = new LocomotiveScroll({
         el: document.querySelector('[data-scroll-container]'),
         smooth: true,
         lerp: 0.1,
         multiplier: 0.7,
       })
+
+      // progress bar handler
+      locoScroll.current.on("scroll", (args) => {
+        const scrollHeight = args.limit.y
+        const scrollTop = args.scroll.y
+        const prog = (scrollTop / scrollHeight) * 100
+        setProgress(prog)
+        setIsScrolled(scrollTop > 10)
+      })
     }
 
-    // progress bar handler
-    locoScroll.current.on("scroll", (args) => {
-      const scrollHeight = args.limit.y
-      const scrollTop = args.scroll.y
-      const prog = (scrollTop / scrollHeight) * 100
-      setProgress(prog)
-      setIsScrolled(scrollTop > 10)
-    })
-
     return () => {
-      locoScroll.current?.destroy()
-      locoScroll.current = null
+      if (!isMobile && locoScroll.current) {
+        locoScroll.current.destroy()
+        locoScroll.current = null
+      }
     }
   }, [])
 
@@ -48,21 +53,49 @@ function Navbar() {
     }
 
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
   }, [isLanguageOpen])
 
-  // Smooth scroll pakai locomotive
+  // Smooth scroll pakai locomotive atau native
   const handleSmoothScroll = (e, targetId) => {
     e.preventDefault()
+    e.stopPropagation()
+
     setIsMobileMenuOpen(false)
     setIsLanguageOpen(false)
 
     const target = document.querySelector(targetId)
-    if (target && locoScroll.current) {
+    if (!target) {
+      console.log('Target element not found:', targetId)
+      return
+    }
+
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    console.log('Scrolling to:', targetId, 'isMobile:', isMobile)
+
+    if (!isMobile && locoScroll.current) {
+      // Gunakan locomotive scroll untuk desktop
+      console.log('Using locomotive scroll')
       locoScroll.current.scrollTo(target, {
-        offset: -80, // biar ga ketutup navbar
+        offset: -80,
         duration: 800,
         easing: [0.25, 0.0, 0.35, 1.0],
+      })
+    } else {
+      // Gunakan native scroll untuk mobile
+      console.log('Using native scroll')
+      const elementPosition = target.getBoundingClientRect().top
+      const offsetPosition = elementPosition + window.pageYOffset - 20 // reduced offset for mobile
+
+      console.log('Element position:', elementPosition, 'Offset position:', offsetPosition)
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
       })
     }
   }
@@ -183,7 +216,10 @@ function Navbar() {
           {/* Mobile Menu Button */}
           <motion.button 
             className={`mobile-menu-btn ${isMobileMenuOpen ? 'active' : ''}`}
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            onClick={() => {
+              setIsMobileMenuOpen(!isMobileMenuOpen)
+              setIsLanguageOpen(false)
+            }}
             whileTap={{ scale: 0.95 }}
           >
             <span></span><span></span><span></span>
@@ -252,16 +288,7 @@ function Navbar() {
       <div 
         className="scroll-progress"
         style={{ 
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '3px',
-          background: 'linear-gradient(90deg, var(--primary-purple), var(--accent-purple))',
           transform: `scaleX(${progress / 100})`,
-          transformOrigin: '0%',
-          transition: 'transform 0.1s linear',
-          zIndex: 1002
         }}
       />
     </motion.nav>
